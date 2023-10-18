@@ -27,47 +27,7 @@ from sklearn.ensemble import RandomForestClassifier, IsolationForest
 
 df = pd.read_csv('data/winequalityN.csv')
 
-"""Проводим исследовательский анализ данных"""
-
-df.info()
-
-df.head()
-
-"""Определяем категориальные и количественные признаки"""
-
-num, cat = data_type(df)
-
-"""Исследуем категориальные признаки"""
-
-categorical_data_EDA(df[cat])
-
-sns.set_style({'axes.grid': True})
-sns.countplot(x = 'type', data = df);
-
-"""Исследуем количественные признаки"""
-
-round(numeric_data_EDA(df[num]), 2)
-
-sns.countplot(x = 'quality', data = df.loc[df['type'] == 'white']);
-
-sns.countplot(x = 'quality', data = df.loc[df['type'] == 'red']);
-
-sns.countplot(x = 'quality', data = df);
-
-plt.figure(figsize=(15,8))
-data_corr = df[num].corr()
-data_corr = np.round(data_corr, 2)
-#data_corr[np.abs(data_corr) < 0.05] = 0
-plt.grid(False)
-sns.heatmap(data_corr, annot=True, linewidths=.5, cmap='coolwarm')
-plt.title('Correlation matrix');
-
-sns.pairplot(df, hue = 'type');
-
-"""Зависимость целевого переменной от признаков носит нелинейный характер, для прогнозирования будем использовать древесную модель RandomForestClassifier
-
-Заполняем пропуски
-"""
+"""Заполняем пропуски"""
 
 df.isna().sum()
 
@@ -81,52 +41,6 @@ df_fillna.isna().sum()
 df_white = df_fillna.loc[df_fillna['type'] == 'white'].drop('type', axis = 1).copy().reset_index(drop = True)
 df_red = df_fillna.loc[df_fillna['type'] == 'red'].drop('type', axis = 1).copy().reset_index(drop = True)
 
-"""Исследуем данные на наличие выбросов и удаляем их"""
-
-fig, axs = plt.subplots(4, 3, figsize=(20, 20))
-col = 0
-data = df_white
-for i in range(4):
-  for j in range(3):
-    sns.boxplot(data[data.columns[col]], ax=axs[i, j], color = cm.Paired(col))
-    axs[i, j].set_xlabel(data.columns[col], fontsize = 20)
-    col += 1
-
-fig, axs = plt.subplots(4, 3, figsize=(20, 20))
-col = 0
-data = df_red
-for i in range(4):
-  for j in range(3):
-    sns.boxplot(data[data.columns[col]], ax=axs[i, j], color = cm.Paired(col))
-    axs[i, j].set_xlabel(data.columns[col], fontsize = 20)
-    col += 1
-
-fig, axs = plt.subplots(4, 3, figsize=(20, 20))
-data = df_fillna.drop('type', axis = 1)
-col = 0
-for i in range(4):
-  for j in range(3):
-    sns.histplot(data[data.columns[col]], kde = True, ax = axs[i, j], color = cm.Paired(col))
-    axs[i, j].set_xlabel(data.columns[col], fontsize = 20)
-    col += 1
-
-fig, axs = plt.subplots(4, 3, figsize=(20, 20))
-data = df_red
-col = 0
-for i in range(4):
-  for j in range(3):
-    sns.histplot(data[data.columns[col]], kde = True, ax = axs[i, j], color = cm.Paired(col))
-    axs[i, j].set_xlabel(data.columns[col], fontsize = 20)
-    col += 1
-
-fig, axs = plt.subplots(4, 3, figsize=(20, 20))
-data = df_white
-col = 0
-for i in range(4):
-  for j in range(3):
-    sns.histplot(data[data.columns[col]], kde = True, ax = axs[i, j], color = cm.Paired(col))
-    axs[i, j].set_xlabel(data.columns[col], fontsize = 20)
-    col += 1
 
 """Распределение признаков для красного и белого вин различно, целесообразно разделить датасет по типу вина."""
 
@@ -145,8 +59,3 @@ model_test(X = df_white.drop(['quality'], axis = 1), y = df_white['quality'])
 
 model_test(X = df_fillna.drop(['type' ,'quality'], axis = 1), y = df_fillna['quality'])
 
-"""Выводы:
-1. Качество предсказания оценки вина неочень высокое.
-2. Исключение выбросов в среднем неизменило качество моделей (для красного вина качество снизилось, для белого повысилось).
-3. Разделение датасета по видам вина незначительно повысило качество модели для белого вина, но снизило для красного.
-"""
