@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from sripts2 import *
 from matplotlib import cm
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
@@ -21,66 +22,10 @@ from sklearn.linear_model import LinearRegression
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.ensemble import RandomForestClassifier, IsolationForest
 
-"""Определяем функции для работы с данными"""
-
-def data_type(data):
-  num = data.select_dtypes([np.number]).columns.tolist()
-  cat = data.select_dtypes('object').columns.tolist()
-  return num, cat
-
-def numeric_data_EDA(data):
-  df_EDA = data.describe().T.drop(['count', '25%', '50%', '75%'], axis = 1)
-  df_EDA['NAN_Percentage'] = 100 * data.isna().sum() / len(data)
-  for col in data.columns:
-    q1 = data[col].quantile(0.25)
-    q3 = data[col].quantile(0.75)
-    IQR = q3 - q1
-    upper = q3 + 1.5 * IQR
-    lower = q1 - 1.5 * IQR
-    outliers_count = data.loc[(data[col] > upper)|(data[col] < lower), col].count()
-    df_EDA.loc[col, 'Outliers_Percentage'] = (100 * outliers_count / len(data))
-  df_EDA['skewness'] = data.skew()
-  df_EDA['kurtosis'] = data.kurt()
-  df_EDA.round(2)
-  return df_EDA
-
-def categorical_data_EDA(data):
-
-  df_EDA = pd.concat([data.apply(lambda x: x.nunique()),
-                      data.apply(lambda x: [x.unique()]).T,
-                      data.apply(lambda x: x.mode()).T,
-                      100 * data.isna().sum() / len(data)], axis = 1, sort=False)
-  df_EDA.columns = ['unique', 'values', 'mode', 'NAN_Percentage']
-  return df_EDA
-
-def Fill_NA_LinReg(data, column, cols = None):
-  if cols == None:
-    cols = data.select_dtypes([np.number]).columns.tolist()
-    cols.remove(column)
-  data_tmp = data.dropna()
-  data_tmp2 = data.fillna(data.mean())
-  model = make_pipeline(StandardScaler(), LinearRegression())
-  model.fit(data_tmp[cols], data_tmp[column])
-  data.loc[data[data[column].isna()].index, column] = model.predict(data_tmp2[data[column].isna()][cols])
-
-def outliers_LogReg(data):
-  LOF = LocalOutlierFactor(novelty=True)
-  LOF.fit(data)
-  pred = LOF.predict(data)
-  outlier_index = np.where(pred == -1)
-  return data.drop(index = outlier_index[0])
-
-def model_test(X,y):
-  scaler = StandardScaler()
-  X = scaler.fit_transform(X)
-  X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 42)
-  model_RFC = RandomForestClassifier(random_state = 42)
-  model_RFC.fit(X_train, y_train)
-  return model_RFC.score(X_test, y_test)
 
 """Загружаем данные"""
 
-df = pd.read_csv('winequalityN.csv')
+df = pd.read_csv('data/winequalityN.csv')
 
 """Проводим исследовательский анализ данных"""
 
